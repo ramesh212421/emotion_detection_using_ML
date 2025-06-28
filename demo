@@ -1,0 +1,51 @@
+import pandas as pd
+
+# Load train data
+train_df = pd.read_csv('train.txt', sep=';', names=['text', 'emotion'])
+
+# Load validation data
+val_df = pd.read_csv('val.txt', sep=';', names=['text', 'emotion'])
+
+# Load test data
+test_df = pd.read_csv('test.txt', sep=';', names=['text', 'emotion'])
+
+
+print(train_df.head())
+print(train_df['emotion'].value_counts())
+
+full_df = pd.concat([train_df, val_df, test_df], ignore_index=True)
+print(full_df.shape)
+
+
+
+
+
+
+#data cleaning process below
+
+import re
+import string
+import nltk
+from nltk.corpus import stopwords
+
+nltk.download('stopwords')
+stop_words = set(stopwords.words('english'))
+
+def clean_text(text):
+    text = text.lower()
+    text = re.sub(r'http\S+', '', text)  # remove URLs
+    text = text.translate(str.maketrans('', '', string.punctuation))  # remove punctuations
+    text = ' '.join(word for word in text.split() if word not in stop_words)  # remove stopwords
+    return text
+
+full_df['clean_text'] = full_df['text'].apply(clean_text)
+
+
+
+#vectoring text below
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+vectorizer = TfidfVectorizer(max_features=5000)
+X = vectorizer.fit_transform(full_df['clean_text']).toarray()
+y = full_df['emotion']
